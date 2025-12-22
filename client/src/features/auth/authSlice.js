@@ -22,6 +22,19 @@ export const loginUser = createAsyncThunk(
     }
 );
 
+export const logoutUser = createAsyncThunk(
+    'auth/logoutUser',
+    async (_, { rejectWithValue }) => {
+        try {
+            await axios.post('http://localhost:5000/api/auth/logout');
+            localStorage.removeItem('token');
+            return null;
+        } catch (error) {
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+
 const authSlice = createSlice({
     name: 'auth',
     initialState,
@@ -57,6 +70,12 @@ const authSlice = createSlice({
             .addCase(loginUser.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload?.message || 'Login failed';
+            })
+            .addCase(logoutUser.fulfilled, (state) => {
+                state.user = null;
+                state.token = null;
+                state.isAuthenticated = false;
+                state.role = null;
             });
     },
 });

@@ -40,18 +40,27 @@ exports.login = async (req, res) => {
         );
 
         if (users.length === 0) {
+            console.log('User not found for email:', email);
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
         const user = users[0];
+        console.log('User found:', { id: user.id, email: user.email, hash: user.password_hash });
+
         const isMatch = await bcrypt.compare(password, user.password_hash);
+        console.log('Password match:', isMatch);
 
         if (!isMatch) {
+            console.log('Password mismatch');
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
+        if (user.status !== 'Active') {
+            return res.status(403).json({ message: 'Account is not active' });
+        }
+
         const token = jwt.sign(
-            { id: user.id, username: user.username, role: user.role_name },
+            { id: user.id, username: user.username, role: user.role_name, department_id: user.department_id },
             process.env.JWT_SECRET,
             { expiresIn: '2h' }
         );
@@ -65,12 +74,13 @@ exports.login = async (req, res) => {
 
         res.json({
             message: 'Login successful',
-            token, // Also separate token if client needs it for some reason (User asked for it in Redux)
+            token,
             user: {
                 id: user.id,
                 username: user.username,
                 email: user.email,
                 role: user.role_name,
+                status: user.status,
                 department_id: user.department_id
             }
         });

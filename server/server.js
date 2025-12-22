@@ -22,6 +22,8 @@ const authRoutes = require('./routes/authRoutes');
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/projects', require('./routes/projectRoutes'));
+app.use('/uploads', express.static('uploads'));
 
 app.get('/', (req, res) => {
     res.send('Dominion University API is running');
