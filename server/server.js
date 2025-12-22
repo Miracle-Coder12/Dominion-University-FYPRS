@@ -23,6 +23,7 @@ const authRoutes = require('./routes/authRoutes');
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', require('./routes/projectRoutes'));
+app.use('/api/reading', require('./routes/readingRoutes')); // Phase 3 Reading Features
 app.use('/uploads', express.static('uploads'));
 
 app.get('/', (req, res) => {

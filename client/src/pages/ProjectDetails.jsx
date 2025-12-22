@@ -2,12 +2,16 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchProjectDetails, uploadNewVersion } from '../features/projects/projectSlice';
+import { fetchProgress } from '../features/reading/progressSlice';
+import InteractiveViewer from '../components/InteractiveViewer';
+import AnnotationPanel from '../components/AnnotationPanel';
 
 const ProjectDetails = () => {
     const { id } = useParams();
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { currentProject, loading, error } = useSelector((state) => state.projects);
+    const { lastPage } = useSelector((state) => state.progress);
     const { user } = useSelector((state) => state.auth);
 
     const [selectedVersion, setSelectedVersion] = useState(null);
@@ -18,6 +22,7 @@ const ProjectDetails = () => {
 
     useEffect(() => {
         dispatch(fetchProjectDetails(id));
+        dispatch(fetchProgress(id));
     }, [dispatch, id]);
 
     useEffect(() => {
@@ -71,31 +76,30 @@ const ProjectDetails = () => {
         }
     };
 
-    if (loading) return <div style={{ textAlign: 'center', marginTop: '2rem' }}>Loading...</div>;
-    if (error) return <div className="error-message" style={{ textAlign: 'center', marginTop: '2rem' }}>{error}</div>;
+    if (loading) return <div style={{ textAlign: 'center', marginTop: '5rem' }}>Loading project...</div>;
+    if (error) return <div className="error-message" style={{ textAlign: 'center', marginTop: '5rem' }}>{error}</div>;
     if (!currentProject || !currentProject.project) return null;
 
     const { project, versions } = currentProject;
 
-    // Normalize path for Windows: replace \ with /
-    const fileUrl = selectedVersion ? `http://localhost:5000/${selectedVersion.file_path.replace(/\\/g, '/')}` : '';
-
     return (
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem', height: '90vh', display: 'flex', flexDirection: 'column' }}>
-            <button onClick={() => navigate('/dashboard')} style={{ width: 'auto', marginBottom: '1rem', background: 'none', color: 'var(--primary-color)', border: 'none', padding: 0, textAlign: 'left', cursor: 'pointer' }}>
-                &larr; Back to Dashboard
-            </button>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem', display: 'flex', flexDirection: 'column', height: '100vh', boxSizing: 'border-box' }}>
+            <header style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <button
+                    onClick={() => navigate('/dashboard')}
+                    style={{ width: 'auto', background: 'white', color: 'var(--primary-color)', border: '1px solid var(--primary-color)', padding: '0.5rem 1rem' }}
+                >
+                    &larr; Dashboard
+                </button>
+                <h1 style={{ margin: 0, fontSize: '1.5rem' }}>{project.title}</h1>
+            </header>
 
             <div style={{ display: 'flex', gap: '2rem', flex: 1, minHeight: 0 }}>
-                {/* Sidebar / Info */}
-                <div style={{ width: '300px', flexShrink: 0, overflowY: 'auto', paddingRight: '1rem' }}>
-                    <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{project.title}</h2>
-                    <p style={{ color: 'var(--text-light)', marginBottom: '1rem' }}>
-                        Version {selectedVersion?.version_number}
-                    </p>
+                {/* Sidebar */}
+                <aside style={{ width: '320px', flexShrink: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
-                    <div style={{ marginBottom: '2rem', background: 'white', padding: '1rem', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '0.5rem' }}>Select Version</label>
+                    <div className="auth-card" style={{ padding: '1.25rem', textAlign: 'left', alignItems: 'flex-start' }}>
+                        <label style={{ fontWeight: '600', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Version History</label>
                         <select
                             value={selectedVersion?.id || ''}
                             onChange={handleVersionChange}
@@ -103,63 +107,70 @@ const ProjectDetails = () => {
                         >
                             {versions.map(v => (
                                 <option key={v.id} value={v.id}>
-                                    v{v.version_number} - {new Date(v.upload_date).toLocaleDateString()}
+                                    v{v.version_number} ({new Date(v.upload_date).toLocaleDateString()})
                                 </option>
                             ))}
                         </select>
-                        <p style={{ fontSize: '0.9rem', fontStyle: 'italic', color: '#666' }}>
-                            "{selectedVersion?.change_description}"
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', borderLeft: '3px solid #ddd', paddingLeft: '0.75rem' }}>
+                            {selectedVersion?.change_description}
                         </p>
                     </div>
 
-                    <div style={{ marginBottom: '2rem' }}>
-                        <h3>Abstract</h3>
-                        <p style={{ fontSize: '0.95rem', lineHeight: '1.6' }}>{project.description}</p>
+                    <AnnotationPanel versionId={selectedVersion?.id} />
+
+                    <div style={{ padding: '0 0.5rem' }}>
+                        <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Abstract</h3>
+                        <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', lineHeight: '1.6' }}>
+                            {project.description}
+                        </p>
                     </div>
 
-                    {['Student'].includes(user?.role) && (
-                        <div>
-                            <button onClick={() => setShowUpload(!showUpload)} style={{ marginBottom: '1rem' }}>
-                                {showUpload ? 'Cancel Update' : 'Upload New Version'}
+                    {['Student', 'Admin'].includes(user?.role) && (
+                        <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
+                            <button onClick={() => setShowUpload(!showUpload)} style={{ marginBottom: '1rem', backgroundColor: showUpload ? '#666' : 'var(--primary-color)' }}>
+                                {showUpload ? 'Cancel' : 'Upload Revision'}
                             </button>
                             {showUpload && (
-                                <form onSubmit={handleFileUpload} style={{ background: '#f8f9fa', padding: '1rem', borderRadius: '8px' }}>
-                                    <input
-                                        type="text"
-                                        placeholder="Change Description"
-                                        value={changeDesc}
-                                        onChange={(e) => setChangeDesc(e.target.value)}
-                                        required
-                                        style={{ marginBottom: '0.5rem' }}
-                                    />
-                                    <input
-                                        type="file"
-                                        accept=".pdf,.doc,.docx"
-                                        onChange={(e) => setFile(e.target.files[0])}
-                                        required
-                                        style={{ marginBottom: '0.5rem' }}
-                                    />
-                                    <button type="submit" disabled={uploadLoading}>
-                                        {uploadLoading ? 'Uploading...' : 'Submit Version'}
-                                    </button>
-                                </form>
+                                <div className="auth-card" style={{ padding: '1rem' }}>
+                                    <form onSubmit={handleFileUpload}>
+                                        <input
+                                            type="text"
+                                            placeholder="What changed?"
+                                            value={changeDesc}
+                                            onChange={(e) => setChangeDesc(e.target.value)}
+                                            required
+                                        />
+                                        <input
+                                            type="file"
+                                            accept=".pdf,.doc,.docx"
+                                            onChange={(e) => setFile(e.target.files[0])}
+                                            required
+                                        />
+                                        <button type="submit" disabled={uploadLoading}>
+                                            {uploadLoading ? 'Uploading...' : 'Upload v' + (versions.length + 1)}
+                                        </button>
+                                    </form>
+                                </div>
                             )}
                         </div>
                     )}
-                </div>
+                </aside>
 
-                {/* Document Viewer */}
-                <div style={{ flex: 1, background: '#e9ecef', borderRadius: '12px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {/* Main Viewer Area */}
+                <section style={{ flex: 1, position: 'relative', overflow: 'hidden', backgroundColor: '#f0f2f5', borderRadius: '12px' }}>
                     {selectedVersion ? (
-                        <iframe
-                            src={fileUrl}
-                            style={{ width: '100%', height: '100%', border: 'none' }}
-                            title="Document Viewer"
+                        <InteractiveViewer
+                            projectId={id}
+                            versionId={selectedVersion.id}
+                            filePath={selectedVersion.file_path}
+                            initialPage={lastPage}
                         />
                     ) : (
-                        <p>Select a version to view</p>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                            <p>Loading document...</p>
+                        </div>
                     )}
-                </div>
+                </section>
             </div>
         </div>
     );
