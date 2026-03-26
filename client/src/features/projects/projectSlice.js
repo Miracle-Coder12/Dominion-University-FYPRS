@@ -4,6 +4,17 @@ import axios from 'axios';
 const initialState = {
     projects: [],
     currentProject: null,
+    pagination: {
+        total: 0,
+        page: 1,
+        limit: 9,
+        totalPages: 1
+    },
+    searchParams: {
+        search: '',
+        department: '',
+        sort: 'desc'
+    },
     loading: false,
     error: null,
 };
@@ -11,14 +22,15 @@ const initialState = {
 // Async Thunks
 export const fetchProjects = createAsyncThunk(
     'projects/fetchAll',
-    async (_, { rejectWithValue, getState }) => {
+    async (params = {}, { rejectWithValue, getState }) => {
         try {
             const token = getState().auth.token;
             const config = {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
+                params: params // { search, department, page, limit, sort }
             };
             const response = await axios.get('http://localhost:5000/api/projects', config);
-            return response.data;
+            return response.data; // { projects, pagination }
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch projects');
         }
@@ -82,6 +94,25 @@ export const uploadNewVersion = createAsyncThunk(
     }
 );
 
+export const extractMetadata = createAsyncThunk(
+    'projects/extractMetadata',
+    async (formData, { rejectWithValue, getState }) => {
+        try {
+            const token = getState().auth.token;
+            const config = {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    Authorization: `Bearer ${token}`
+                }
+            };
+            const response = await axios.post('http://localhost:5000/api/projects/extract-metadata', formData, config);
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to extract metadata');
+        }
+    }
+);
+
 const projectSlice = createSlice({
     name: 'projects',
     initialState,
@@ -99,7 +130,8 @@ const projectSlice = createSlice({
             })
             .addCase(fetchProjects.fulfilled, (state, action) => {
                 state.loading = false;
-                state.projects = action.payload;
+                state.projects = action.payload.projects;
+                state.pagination = action.payload.pagination;
             })
             .addCase(fetchProjects.rejected, (state, action) => {
                 state.loading = false;
@@ -137,6 +169,17 @@ const projectSlice = createSlice({
                 state.loading = false;
             })
             .addCase(uploadNewVersion.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            // Extract Metadata
+            .addCase(extractMetadata.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(extractMetadata.fulfilled, (state) => {
+                state.loading = false;
+            })
+            .addCase(extractMetadata.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             });

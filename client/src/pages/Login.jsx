@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginUser } from '../features/auth/authSlice';
 import { useNavigate, Link } from 'react-router-dom';
+import { GraduationCap, Eye, EyeOff, Lock, Mail, ArrowRight } from 'lucide-react';
+import { loginUser } from '../features/auth/authSlice';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import { Label } from '../components/ui/Label';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/Card';
+import { motion } from 'motion/react';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -20,61 +26,111 @@ const Login = () => {
     };
 
     return (
-        <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-            <div className="auth-card">
-                <img src="/logo.svg" alt="Dominion University" className="auth-logo" />
-                <h2>Welcome Back</h2>
-                <p style={{ color: 'var(--text-light)', marginBottom: '1.5rem' }}>Login to your account</p>
-
-                <form onSubmit={handleSubmit}>
-                    <input
-                        type="email"
-                        placeholder="Email Address"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                    />
-
-                    <div className="password-wrapper">
-                        <input
-                            type={showPassword ? "text" : "password"}
-                            placeholder="Password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
-                        <button
-                            type="button"
-                            className="password-toggle-icon"
-                            onClick={() => setShowPassword(!showPassword)}
-                            tabIndex="-1"
-                        >
-                            {showPassword ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                    <circle cx="12" cy="12" r="3"></circle>
-                                    <line x1="1" y1="1" x2="23" y2="23"></line>
-                                </svg>
-                            ) : (
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                    <circle cx="12" cy="12" r="3"></circle>
-                                </svg>
-                            )}
-                        </button>
+        <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4">
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="w-full max-w-md"
+            >
+                {/* Logo Section */}
+                <div className="flex flex-col items-center mb-8 gap-3">
+                    <div className="bg-blue-600 p-3 rounded-2xl text-white shadow-xl shadow-blue-200">
+                        <GraduationCap className="w-8 h-8" />
                     </div>
-
-                    {error && <div className="error-message">{error}</div>}
-
-                    <button type="submit" disabled={loading}>
-                        {loading ? 'Logging in...' : 'Login'}
-                    </button>
-                </form>
-
-                <div className="auth-footer">
-                    Don't have an account? <Link to="/signup">Sign Up</Link>
+                    <div className="text-center">
+                        <h1 className="font-bold text-2xl text-gray-900 tracking-tight">Dominion University</h1>
+                        <p className="text-sm text-blue-600 font-bold uppercase tracking-widest mt-1">Project Repository</p>
+                    </div>
                 </div>
-            </div>
+
+                <Card className="border-gray-200 shadow-xl shadow-gray-200/50 rounded-2xl overflow-hidden">
+                    <CardHeader className="space-y-1 pb-6 text-center">
+                        <CardTitle className="text-2xl font-bold tracking-tight">Welcome back</CardTitle>
+                        <CardDescription>Enter your credentials to access your account</CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid gap-6">
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="email">Email</Label>
+                                <div className="relative group">
+                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
+                                    <Input
+                                        id="email"
+                                        type="email"
+                                        placeholder="name@university.edu"
+                                        className="pl-10 bg-gray-50/50 border-gray-200 focus:bg-white transition-all py-6 h-12"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                            </div>
+                            <div className="grid gap-2">
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="password">Password</Label>
+                                    <Link to="/forgot-password" virtual="true" className="text-xs font-semibold text-blue-600 hover:text-blue-700">Forgot password?</Link>
+                                </div>
+                                <div className="relative group">
+                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
+                                    <Input
+                                        id="password"
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="••••••••"
+                                        className="pl-10 pr-10 bg-gray-50/50 border-gray-200 focus:bg-white transition-all py-6 h-12"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 transition-colors rounded-lg"
+                                    >
+                                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {error && (
+                                <div className="p-3 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm font-medium animate-in fade-in slide-in-from-top-2">
+                                    {error}
+                                </div>
+                            )}
+
+                            <Button
+                                type="submit"
+                                className="w-full py-6 h-12 rounded-xl text-md font-bold transition-all shadow-lg hover:shadow-blue-200 active:scale-[0.98]"
+                                disabled={loading}
+                            >
+                                {loading ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                        <span>Signing in...</span>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <span>Sign in</span>
+                                        <ArrowRight className="w-4 h-4" />
+                                    </div>
+                                )}
+                            </Button>
+                        </form>
+                    </CardContent>
+                    <CardFooter className="flex flex-col gap-4 pb-8 border-t border-gray-50 pt-6 mt-2">
+                        <p className="text-sm text-center text-gray-500">
+                            Don't have an account?{' '}
+                            <Link to="/signup" className="font-bold text-blue-600 hover:text-blue-700 underline-offset-4 hover:underline">
+                                Request Access
+                            </Link>
+                        </p>
+                    </CardFooter>
+                </Card>
+
+                <p className="mt-8 text-center text-xs text-gray-400 font-medium">
+                    &copy; 2026 Dominion University. Secured Academic Repository.
+                </p>
+            </motion.div>
         </div>
     );
 };

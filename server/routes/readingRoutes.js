@@ -8,6 +8,7 @@ router.use(verifyToken);
 
 // Progress
 router.post('/progress', readingController.saveProgress);
+router.get('/progress/recent', readingController.getRecentActivity);
 router.get('/progress/:projectId', readingController.getProgress);
 
 // Annotations

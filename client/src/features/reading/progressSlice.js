@@ -3,6 +3,7 @@ import axios from 'axios';
 
 const initialState = {
     lastPage: 1,
+    recentActivity: [],
     loading: false,
     error: null,
 };
@@ -17,6 +18,20 @@ export const fetchProgress = createAsyncThunk(
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch progress');
+        }
+    }
+);
+
+export const fetchRecentActivity = createAsyncThunk(
+    'reading/fetchRecent',
+    async (_, { rejectWithValue, getState }) => {
+        try {
+            const token = getState().auth.token;
+            const config = { headers: { Authorization: `Bearer ${token}` } };
+            const response = await axios.get('http://localhost:5000/api/reading/progress/recent', config);
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to fetch recent activity');
         }
     }
 );
@@ -47,6 +62,9 @@ const progressSlice = createSlice({
         builder
             .addCase(fetchProgress.fulfilled, (state, action) => {
                 state.lastPage = action.payload.last_page || 1;
+            })
+            .addCase(fetchRecentActivity.fulfilled, (state, action) => {
+                state.recentActivity = action.payload;
             })
             .addCase(fetchProgress.rejected, (state, action) => {
                 state.error = action.payload;

@@ -1,0 +1,98 @@
+erDiagram
+    %% Annotations and Comments (Requested TOP RIGHT)
+    ANNOTATIONS ||--o{ ANNOTATION_COMMENTS : "has"
+    USERS ||--o{ ANNOTATIONS : "creates"
+    PROJECT_VERSIONS ||--o{ ANNOTATIONS : "references"
+    USERS ||--o{ ANNOTATION_COMMENTS : "posts"
+
+    %% Reading Progress (Requested CENTER/LEFT relative to Annotations)
+    USERS ||--o{ USER_READING_PROGRESS : "records"
+    PROJECTS ||--o{ USER_READING_PROGRESS : "monitors"
+    PROJECTS ||--o{ PROJECT_VERSIONS : "versions"
+
+    %% Base Entities (Requested BOTTOM/LEFT)
+    USERS ||--o{ PROJECTS : "authors"
+    DEPARTMENTS ||--o{ USERS : "contains"
+    DEPARTMENTS ||--o{ PROJECTS : "categorizes"
+    ROLES ||--o{ USERS : "assigned to"
+    USERS ||--o{ AUDIT_LOGS : "triggers"
+
+    USERS {
+        int id PK
+        string username
+        string email
+        string password_hash
+        int role_id FK
+        int department_id FK
+        enum status
+        timestamp created_at
+    }
+
+    ROLES {
+        int id PK
+        string name
+        string description
+    }
+
+    DEPARTMENTS {
+        int id PK
+        string name
+        string code
+    }
+
+    PROJECTS {
+        int id PK
+        string title
+        text description
+        int student_id FK
+        int department_id FK
+        timestamp created_at
+    }
+
+    PROJECT_VERSIONS {
+        int id PK
+        int project_id FK
+        int version_number
+        string file_path
+        timestamp upload_date
+        text change_description
+        boolean is_current
+    }
+
+    ANNOTATIONS {
+        int id PK
+        int user_id FK
+        int version_id FK
+        int page_number
+        string color
+        string type
+        text position_data
+        text content
+        timestamp created_at
+    }
+
+    ANNOTATION_COMMENTS {
+        int id PK
+        int annotation_id FK
+        int user_id FK
+        text comment_text
+        timestamp created_at
+    }
+
+    USER_READING_PROGRESS {
+        int id PK
+        int user_id FK
+        int project_id FK
+        int version_id FK
+        int last_page
+        timestamp updated_at
+    }
+
+    AUDIT_LOGS {
+        int id PK
+        int user_id FK
+        string action
+        text details
+        string ip_address
+        timestamp created_at
+    }

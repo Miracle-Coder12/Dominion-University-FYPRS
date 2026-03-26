@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addComment } from '../features/reading/annotationSlice';
+import { MessageSquare, Send, User, Clock, Bookmark } from 'lucide-react';
+import { Button } from './ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
+
 
 const AnnotationPanel = ({ versionId }) => {
     const dispatch = useDispatch();
@@ -17,50 +21,75 @@ const AnnotationPanel = ({ versionId }) => {
     };
 
     return (
-        <div className="annotation-panel" style={{ padding: '1rem', background: 'white', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>Annotations</h3>
+        <Card className="rounded-2xl border-gray-200 flex flex-col h-full overflow-hidden shadow-sm">
+            <CardHeader className="pb-3 border-b border-gray-50">
+                <CardTitle className="text-sm flex items-center gap-2 font-bold text-gray-900">
+                    <MessageSquare className="w-4 h-4 text-blue-600" />
+                    Review Annotations
+                </CardTitle>
+            </CardHeader>
 
-            <div className="annotations-list" style={{ flex: 1, overflowY: 'auto', marginBottom: '1rem' }}>
-                {annotations.length === 0 && <p style={{ color: '#999', fontSize: '0.9rem' }}>No highlights yet.</p>}
-
-                {annotations.map(ann => (
-                    <div
-                        key={ann.id}
-                        onClick={() => setSelectedAnn(ann)}
-                        style={{
-                            padding: '0.75rem',
-                            borderRadius: '8px',
-                            background: selectedAnn?.id === ann.id ? '#f0f7ff' : '#f9f9f9',
-                            borderLeft: `4px solid ${ann.color}`,
-                            marginBottom: '0.75rem',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        <p style={{ fontSize: '0.85rem', fontWeight: '500', margin: 0 }}>Page {ann.page_number}</p>
-                        <p style={{ fontSize: '0.9rem', color: '#555', margin: '0.25rem 0', fontStyle: 'italic' }}>
-                            "{ann.content?.substring(0, 50)}..."
-                        </p>
-                        <span style={{ fontSize: '0.75rem', color: '#888' }}>By {ann.username}</span>
+            <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                {annotations.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8 text-center px-4">
+                        <div className="bg-gray-50 p-3 rounded-2xl mb-3">
+                            <Bookmark className="w-6 h-6 text-gray-300" />
+                        </div>
+                        <p className="text-xs text-gray-400 font-medium">No highlights have been added to this version yet.</p>
                     </div>
-                ))}
-            </div>
+                ) : (
+                    annotations.map(ann => (
+                        <div
+                            key={ann.id}
+                            onClick={() => setSelectedAnn(ann)}
+                            className={`p-4 rounded-2xl transition-all cursor-pointer border-l-4 group relative ${selectedAnn?.id === ann.id
+                                ? 'bg-blue-50/50 border-l-blue-600 shadow-sm'
+                                : 'bg-gray-50/50 border-l-gray-200 hover:border-l-blue-300 hover:bg-gray-50'
+                                }`}
+                        >
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">Page {ann.page_number}</span>
+                                <span className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    Just now
+                                </span>
+                            </div>
+                            <p className="text-xs text-gray-700 italic leading-relaxed mb-3 line-clamp-2">
+                                "{ann.content}"
+                            </p>
+                            <div className="flex items-center gap-2 pt-2 border-t border-gray-100/50">
+                                <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[8px] font-bold text-gray-500 uppercase">
+                                    {ann.username?.substring(0, 2)}
+                                </div>
+                                <span className="text-[10px] text-gray-500 font-semibold">{ann.username}</span>
+                            </div>
+                        </div>
+                    ))
+                )}
+            </CardContent>
 
             {selectedAnn && (
-                <div style={{ borderTop: '1px solid #eee', paddingTop: '1rem' }}>
-                    <h4 style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>Add Comment</h4>
-                    <form onSubmit={handleAddComment}>
+                <div className="p-4 border-t border-gray-100 bg-gray-50/50">
+                    <form onSubmit={handleAddComment} className="relative">
                         <textarea
                             value={commentText}
                             onChange={(e) => setCommentText(e.target.value)}
-                            placeholder="Type a comment..."
-                            style={{ width: '100%', fontSize: '0.85rem', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ddd', minHeight: '60px' }}
+                            placeholder="Add your review comment..."
+                            className="w-full text-xs p-3 pr-12 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none resize-none bg-white min-h-[80px]"
                         />
-                        <button type="submit" style={{ marginTop: '0.5rem', padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>Post</button>
+                        <Button
+                            type="submit"
+                            size="icon"
+                            className="absolute bottom-3 right-3 h-8 w-8 rounded-lg shadow-lg shadow-blue-200"
+                            disabled={!commentText.trim()}
+                        >
+                            <Send className="w-3 h-3" />
+                        </Button>
                     </form>
+                    <p className="text-[9px] text-gray-400 mt-2 text-center">Press Enter to post your comment</p>
                 </div>
             )}
-        </div>
+        </Card>
     );
 };
 

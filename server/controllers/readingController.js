@@ -52,6 +52,26 @@ exports.getProgress = async (req, res) => {
     }
 };
 
+exports.getRecentActivity = async (req, res) => {
+    const userId = req.user.id;
+    try {
+        const [rows] = await db.query(
+            `SELECT p.id, p.title, p.description, pv.version_number, urp.last_page, urp.updated_at
+             FROM user_reading_progress urp
+             JOIN projects p ON urp.project_id = p.id
+             JOIN project_versions pv ON urp.version_id = pv.id
+             WHERE urp.user_id = ?
+             ORDER BY urp.updated_at DESC
+             LIMIT 5`,
+            [userId]
+        );
+        res.json(rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error fetching recent activity' });
+    }
+};
+
 // --- Annotations ---
 
 exports.getAnnotations = async (req, res) => {

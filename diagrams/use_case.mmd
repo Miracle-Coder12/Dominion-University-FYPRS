@@ -1,0 +1,38 @@
+graph LR
+    subgraph Actors
+        A[Admin]
+        S[Student]
+        AS[Academic Staff]
+    end
+
+    subgraph "Project Repository System"
+        UC1(Login/Signup Interface)
+        UC2(Upload Project File)
+        UC3(Manage Project Versions)
+        UC4(Search & Filter Projects)
+        UC5(Annotate PDF/Document)
+        UC6(Add Comments to Annotations)
+        UC7(Track Reading Progress)
+        UC8(User Management Console)
+        UC9(Audit Logs & Stats View)
+    end
+
+    %% Student Relationships
+    S --- UC1
+    S --- UC2
+    S --- UC3
+    S --- UC4
+    S --- UC7
+
+    %% Staff Relationships
+    AS --- UC1
+    AS --- UC4
+    AS --- UC5
+    AS --- UC6
+    AS --- UC7
+
+    %% Admin Relationships
+    A --- UC1
+    A --- UC4
+    A --- UC8
+    A --- UC9

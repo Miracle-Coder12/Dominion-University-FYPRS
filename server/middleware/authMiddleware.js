@@ -26,4 +26,28 @@ const checkRole = (roles) => (req, res, next) => {
     next();
 };
 
-module.exports = { verifyToken, checkRole };
+const isAdmin = (req, res, next) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Admin access required' });
+    }
+    next();
+};
+
+const auditLogger = (action) => async (req, res, next) => {
+    const db = require('../config/db');
+    const userId = req.user?.id;
+    const details = `${req.method} ${req.originalUrl}`;
+    const ip = req.ip;
+
+    try {
+        await db.query(
+            'INSERT INTO audit_logs (user_id, action, details, ip_address) VALUES (?, ?, ?, ?)',
+            [userId || null, action, details, ip]
+        );
+    } catch (err) {
+        console.error('Audit log failed:', err);
+    }
+    next();
+};
+
+module.exports = { verifyToken, checkRole, isAdmin, auditLogger };

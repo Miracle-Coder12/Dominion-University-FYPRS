@@ -80,18 +80,61 @@ exports.createProject = async (req, res) => {
 
 exports.getAllProjects = async (req, res) => {
     try {
-        // Fetch projects with their latest version info and user details
-        const [projects] = await db.query(`
-            SELECT p.*, pv.version_number, pv.file_path, pv.upload_date, u.username as student_name
+        const { search, department, page = 1, limit = 9, sort = 'desc' } = req.query;
+        const offset = (page - 1) * limit;
+
+        let query = `
+            SELECT p.*, pv.version_number, pv.file_path, pv.upload_date, u.username as student_name, d.name as department_name
             FROM projects p
             JOIN project_versions pv ON p.id = pv.project_id
             JOIN users u ON p.student_id = u.id
+            JOIN departments d ON p.department_id = d.id
             WHERE pv.is_current = TRUE
-            ORDER BY p.created_at DESC
-        `);
-        res.json(projects);
+        `;
+        let countQuery = `
+            SELECT COUNT(*) as total 
+            FROM projects p 
+            JOIN project_versions pv ON p.id = pv.project_id
+            WHERE pv.is_current = TRUE
+        `;
+
+        const queryParams = [];
+        const countParams = [];
+
+        if (search) {
+            const searchFilter = ' AND (p.title LIKE ? OR p.description LIKE ? OR u.username LIKE ?)';
+            query += searchFilter;
+            countQuery += searchFilter;
+            const searchTerm = `%${search}%`;
+            queryParams.push(searchTerm, searchTerm, searchTerm);
+            countParams.push(searchTerm, searchTerm, searchTerm);
+        }
+
+        if (department) {
+            const deptFilter = ' AND p.department_id = ?';
+            query += deptFilter;
+            countQuery += deptFilter;
+            queryParams.push(department);
+            countParams.push(department);
+        }
+
+        query += ` ORDER BY p.created_at ${sort.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'} LIMIT ? OFFSET ?`;
+        queryParams.push(parseInt(limit), parseInt(offset));
+
+        const [projects] = await db.query(query, queryParams);
+        const [countResult] = await db.query(countQuery, countParams);
+
+        res.json({
+            projects,
+            pagination: {
+                total: countResult[0].total,
+                page: parseInt(page),
+                limit: parseInt(limit),
+                totalPages: Math.ceil(countResult[0].total / limit)
+            }
+        });
     } catch (error) {
-        console.error(error);
+        console.error('Search error:', error);
         res.status(500).json({ message: 'Server error fetching projects' });
     }
 };

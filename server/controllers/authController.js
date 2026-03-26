@@ -4,7 +4,7 @@ const db = require('../config/db');
 
 exports.register = async (req, res) => {
     // Simple register for testing if needed, or manual insert
-    const { username, email, password, role_id, department_id } = req.body;
+    const { username, email, password, role_id, department_id, full_name, matric_number } = req.body;
 
     try {
         // Check if user exists
@@ -17,8 +17,8 @@ exports.register = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, salt);
 
         await db.query(
-            'INSERT INTO users (username, email, password_hash, role_id, department_id) VALUES (?, ?, ?, ?, ?)',
-            [username, email, hashedPassword, role_id, department_id]
+            'INSERT INTO users (username, email, password_hash, role_id, department_id, full_name, matric_number) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [username, email, hashedPassword, role_id, department_id, full_name, matric_number]
         );
 
         res.status(201).json({ message: 'User created' });

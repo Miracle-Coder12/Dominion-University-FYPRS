@@ -1,166 +1,32 @@
-import { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchProjects, createProject } from '../features/projects/projectSlice';
-import { useNavigate, Link } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { Navigate } from 'react-router-dom';
+import StudentDashboard from './StudentDashboard';
+import SupervisorDashboard from './SupervisorDashboard';
+import AdminDashboard from './AdminDashboard';
 
 const Dashboard = () => {
-    const dispatch = useDispatch();
-    const navigate = useNavigate();
     const { user } = useSelector((state) => state.auth);
-    const { projects, loading, error } = useSelector((state) => state.projects);
-    const [showUpload, setShowUpload] = useState(false);
 
-    // Upload Form State
-    const [title, setTitle] = useState('');
-    const [description, setDescription] = useState('');
-    const [file, setFile] = useState(null);
+    if (!user) return <Navigate to="/login" replace />;
 
-    useEffect(() => {
-        dispatch(fetchProjects());
-    }, [dispatch]);
-
-    const handleFileChange = (e) => {
-        setFile(e.target.files[0]);
-    };
-
-    const handleUpload = async (e) => {
-        e.preventDefault();
-        if (!file) {
-            alert("Please select a file");
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('title', title);
-        formData.append('description', description);
-        formData.append('projectFile', file);
-
-        const result = await dispatch(createProject(formData));
-        if (createProject.fulfilled.match(result)) {
-            setShowUpload(false);
-            setTitle('');
-            setDescription('');
-            setFile(null);
-            dispatch(fetchProjects()); // Refresh list
-        } else {
-            alert("Upload failed: " + result.payload);
-        }
-    };
-
-    return (
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
-            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingTop: '2rem' }}>
-                <div>
-                    <h1>Academic Repository</h1>
-                    <p style={{ color: 'var(--text-light)' }}>Welcome, {user?.username} ({user?.role})</p>
-                </div>
-                {['Student', 'Admin'].includes(user?.role) && (
-                    <button onClick={() => setShowUpload(!showUpload)} style={{ width: 'auto' }}>
-                        {showUpload ? 'Cancel Upload' : 'Upload New Project'}
-                    </button>
-                )}
-            </header>
-
-            <main className="dashboard-content">
-                {/* Recently Viewed Section */}
-                <section className="recently-viewed" style={{ marginBottom: '3rem' }}>
-                    <h2 style={{ marginBottom: '1.5rem', fontSize: '1.25rem' }}>Recent Research</h2>
-                    {projects.length > 0 ? (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
-                            {projects.slice(0, 3).map(project => (
-                                <div key={project.id} className="auth-card" style={{ padding: '1rem', textAlign: 'left', alignItems: 'flex-start', borderLeft: '4px solid var(--primary-color)' }}>
-                                    <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem 0' }}>{project.title}</h3>
-                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', marginBottom: '1rem' }}>
-                                        Opened: {new Date(project.created_at).toLocaleDateString()}
-                                    </p>
-                                    <button
-                                        onClick={() => navigate(`/projects/${project.id}`)}
-                                        style={{ width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
-                                    >
-                                        Resume Reading
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <p style={{ color: 'var(--text-light)' }}>No recent activity.</p>
-                    )}
-                </section>
-
-                <hr style={{ margin: '3rem 0', opacity: 0.1 }} />
-
-                {showUpload && (
-                    <div className="auth-card" style={{ maxWidth: '600px', margin: '0 auto 3rem auto' }}>
-                        <h3 style={{ marginBottom: '1.5rem' }}>Upload New Project</h3>
-                        <form onSubmit={handleUpload}>
-                            <input
-                                type="text"
-                                placeholder="Project Title"
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                                required
-                            />
-                            <textarea
-                                placeholder="Abstract / Description"
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                rows="4"
-                                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', fontFamily: 'inherit' }}
-                            />
-                            <div style={{ textAlign: 'left' }}>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Project Document (PDF/DOC)</label>
-                                <input
-                                    type="file"
-                                    accept=".pdf,.doc,.docx"
-                                    onChange={handleFileChange}
-                                    required
-                                />
-                            </div>
-                            <button type="submit" disabled={loading}>
-                                {loading ? 'Uploading...' : 'Submit Project'}
-                            </button>
-                        </form>
+    switch (user.role) {
+        case 'Admin':
+            return <AdminDashboard />;
+        case 'Supervisor':
+        case 'Lecturer':
+            return <SupervisorDashboard />;
+        case 'Student':
+            return <StudentDashboard />;
+        default:
+            return (
+                <div className="flex items-center justify-center min-h-[60vh]">
+                    <div className="text-center">
+                        <h2 className="text-2xl font-bold text-gray-900">Access Restricted</h2>
+                        <p className="text-gray-500 mt-2">Your account role ({user.role}) does not have a designated dashboard.</p>
                     </div>
-                )}
-
-                <div className="section-header" style={{ marginBottom: '1.5rem' }}>
-                    <h2 style={{ fontSize: '1.25rem' }}>Repository Explorer</h2>
                 </div>
-
-                {error && <div className="error-message" style={{ marginBottom: '1rem' }}>{error}</div>}
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '2rem' }}>
-                    {projects.map((project) => (
-                        <div key={project.id} className="auth-card" style={{ alignItems: 'flex-start', textAlign: 'left', padding: '1.5rem' }}>
-                            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.25rem' }}>{project.title}</h3>
-                            <p style={{ color: 'var(--text-light)', fontSize: '0.9rem', marginBottom: '1rem' }}>
-                                By {project.student_name} • {new Date(project.created_at).toLocaleDateString()}
-                            </p>
-                            <p style={{ fontSize: '0.95rem', marginBottom: '1.5rem', flex: 1 }}>
-                                {project.description?.substring(0, 100)}...
-                            </p>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                                <span style={{ fontSize: '0.85rem', background: '#eef2f6', padding: '0.25rem 0.5rem', borderRadius: '4px' }}>
-                                    v{project.version_number}
-                                </span>
-                                <button
-                                    onClick={() => navigate(`/projects/${project.id}`)}
-                                    style={{ width: 'auto', padding: '0.5rem 1rem', fontSize: '0.9rem' }}
-                                >
-                                    View Details
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                    {projects.length === 0 && !loading && (
-                        <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--text-light)' }}>
-                            No projects found.
-                        </p>
-                    )}
-                </div>
-            </main>
-        </div>
-    );
+            );
+    }
 };
 
 export default Dashboard;

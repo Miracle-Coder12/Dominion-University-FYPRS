@@ -3,6 +3,7 @@ import authReducer from './features/auth/authSlice';
 import projectReducer from './features/projects/projectSlice';
 import progressReducer from './features/reading/progressSlice';
 import annotationReducer from './features/reading/annotationSlice';
+import adminReducer from './features/admin/adminSlice';
 
 export const store = configureStore({
     reducer: {
@@ -10,5 +11,6 @@ export const store = configureStore({
         projects: projectReducer,
         progress: progressReducer,
         annotations: annotationReducer,
+        admin: adminReducer,
     },
 });
